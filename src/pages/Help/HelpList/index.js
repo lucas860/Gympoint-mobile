@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
+import { withNavigationFocus } from 'react-navigation';
 import { parseISO, formatRelative } from 'date-fns';
 import pt from 'date-fns/locale/pt';
 
@@ -20,29 +21,30 @@ import {
   HelpCardText,
 } from './styles';
 
-export default function HelpList({ navigation }) {
+function HelpList({ navigation, isFocused }) {
   const { student } = useSelector(state => state.student);
-  const { reload } = useSelector(state => state.helpList);
 
   const [questions, setQuestions] = useState([]);
 
+  async function loadQuestions() {
+    const response = await api.get(`/students/${student}/help-orders`);
+
+    const questionList = response.data.map(q => ({
+      ...q,
+      answered: !!q.answer,
+      dateFormatted: formatRelative(parseISO(q.createdAt), new Date(), {
+        locale: pt,
+      }),
+    }));
+
+    setQuestions(questionList);
+  }
+
   useEffect(() => {
-    async function loadQuestions() {
-      const response = await api.get(`/students/${student}/help-orders`);
-
-      const questionList = response.data.map(q => ({
-        ...q,
-        answered: !!q.answer,
-        dateFormatted: formatRelative(parseISO(q.createdAt), new Date(), {
-          locale: pt,
-        }),
-      }));
-
-      setQuestions(questionList);
+    if (isFocused) {
+      loadQuestions();
     }
-
-    loadQuestions();
-  }, [student, reload]);
+  }, [isFocused]);
 
   return (
     <Background>
@@ -52,7 +54,7 @@ export default function HelpList({ navigation }) {
         </HelpButton>
 
         <HelpQuestionsList
-          data={questions.reverse()}
+          data={questions}
           keyExtractor={req => String(req.id)}
           renderItem={({ item: req }) => (
             <HelpCardBorder>
@@ -86,3 +88,5 @@ HelpList.navigationOptions = {
     elevation: 0,
   },
 };
+
+export default withNavigationFocus(HelpList);

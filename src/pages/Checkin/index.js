@@ -29,7 +29,7 @@ export default function Checkin() {
       const response = await api.get(`/students/${student}/checkins`);
 
       const listCheckin = response.data.map(r => ({
-        id: r.id,
+        id: r._id,
         date: formatRelative(parseISO(r.createdAt), new Date(), {
           locale: pt,
         }),
@@ -45,7 +45,7 @@ export default function Checkin() {
     const response = await api.post('/students/3/checkins');
 
     const c = {
-      id: response.data.id,
+      id: response.data._id,
       date: formatRelative(parseISO(response.data.createdAt), new Date(), {
         locale: pt,
       }),
@@ -62,11 +62,17 @@ export default function Checkin() {
         <CheckinButton onPress={handleAddCheckin}>Novo check-in</CheckinButton>
 
         <CheckinList
-          data={checkins.reverse()}
-          keyExtractor={c => String(c.id)}
+          data={checkins}
+          keyExtractor={c => c.id}
           renderItem={({ item: c }) => (
             <CheckinItem>
-              <CheckinStrongText>Check-in #{c.id}</CheckinStrongText>
+              <CheckinStrongText>
+                Check-in #
+                {checkins
+                  .reverse()
+                  .map(checkin => checkin.id)
+                  .indexOf(c.id) + 1}
+              </CheckinStrongText>
               <CheckinText>{c.date}</CheckinText>
             </CheckinItem>
           )}
